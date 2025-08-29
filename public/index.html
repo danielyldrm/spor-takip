@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Spor Takip | Giriş</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body class="landing">
+  <div class="bg-decor">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid-overlay"></div>
+  </div>
+  <header class="landing-header">
+    <div class="brand">
+      <span class="logo-icon">🏋️‍♂️</span>
+      <span class="brand-name">SporTakip</span>
+    </div>
+    <div>
+      <button id="themeToggle" class="ghost-btn small" aria-label="Tema Değiştir">🌓</button>
+      <a href="login.html" class="btn primary filled">Giriş</a>
+    </div>
+  </header>
+  <main class="landing-main">
+    <div class="hero">
+      <h1><span class="grad-text">Kişisel</span> Haftalık Spor Planın</h1>
+      <p class="lead">
+        Basit ama güçlü bir arayüzle egzersizlerini düzenle, takip et ve gün gün organize ol.
+        Sadece sen ve partnerin: özel, hızlı, modern.
+      </p>
+      <div class="hero-actions">
+        <a href="login.html" class="btn primary large emphasis">Hemen Başla</a>
+      </div>
+      <ul class="feature-list">
+        <li>✅ 7 Günlük plan</li>
+        <li>✅ Koyu / Açık Tema</li>
+        <li>✅ Hızlı düzenleme</li>
+        <li>✅ Mobil uyumlu</li>
+      </ul>
+    </div>
+    <div class="preview-panel glass">
+      <h2 class="sub">Canlı Önizleme</h2>
+      <div class="mini-week" id="miniWeek"></div>
+      <p class="muted tiny">Giriş yaptıktan sonra bütün veriler sadece senin hesabında.</p>
+    </div>
+  </main>
+  <footer class="landing-footer">
+    <span class="muted tiny">© 2025 SporTakip • Minimal Özel Kullanım</span>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    setupThemeToggle();
+    if (localStorage.getItem('token')) {
+      // Oturum var => dashboard
+      setTimeout(()=> location.href='dashboard.html', 500);
+    }
+    const dayNames = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+    const mini = document.getElementById('miniWeek');
+    dayNames.forEach(n=>{
+      const d=document.createElement('div');
+      d.className='mini-day';
+      d.innerHTML=`<span>${n}</span><div class="mini-bar"><span style="width:${Math.random()*80+10}%"></span></div>`;
+      mini.appendChild(d);
+    });
+  </script>
+</body>
+</html>

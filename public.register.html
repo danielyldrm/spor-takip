@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Kayıt Ol - Spor Takip</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+  <header class="top-bar">
+    <h1>Kayıt Ol</h1>
+    <button id="themeToggle" class="icon-btn">🌓</button>
+  </header>
+  <main class="form-container">
+    <form id="registerForm" class="card small">
+      <label>
+        Kullanıcı Adı
+        <input name="username" required>
+      </label>
+      <label>
+        Şifre (min 4)
+        <input name="password" type="password" required minlength="4">
+      </label>
+      <button class="btn primary" type="submit">Kaydol</button>
+      <p class="muted">Hesabın var mı? <a href="login.html">Giriş</a></p>
+      <div id="regMsg" class="msg"></div>
+    </form>
+  </main>
+  <script src="app.js"></script>
+  <script src="api.js"></script>
+  <script>
+    setupThemeToggle();
+    document.getElementById('registerForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = Object.fromEntries(fd.entries());
+      const msgBox = document.getElementById('regMsg');
+      msgBox.textContent = 'Gönderiliyor...';
+      try {
+        await apiRegister(data.username, data.password);
+        msgBox.textContent = 'Kayıt başarılı! Yönlendiriliyor...';
+        msgBox.classList.remove('error');
+        setTimeout(()=> location.href='login.html', 1000);
+      } catch (err) {
+        msgBox.textContent = err.message || 'Hata';
+        msgBox.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>

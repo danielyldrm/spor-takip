@@ -1,0 +1,7 @@
+/* Geçişler */
+html {
+  transition: background-color .5s ease, color .5s ease;
+}
+html.dark * {
+  text-shadow: none;
+}

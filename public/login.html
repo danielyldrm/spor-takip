@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Giriş | Spor Takip</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body class="auth-page">
+  <div class="bg-decor">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid-overlay subtle"></div>
+  </div>
+  <main class="auth-wrapper">
+    <section class="auth-card glass">
+      <header class="auth-header">
+        <div class="brand">
+          <span class="logo-icon">🏋️‍♂️</span>
+          <span class="brand-name">SporTakip</span>
+        </div>
+        <button id="themeToggle" class="ghost-btn" aria-label="Tema Değiştir">🌓</button>
+      </header>
+      <h1 class="auth-title">Giriş Yap</h1>
+      <p class="muted small">Kişisel planına ulaşmak için bilgilerini gir.</p>
+      <form id="loginForm" class="form modern">
+        <div class="field">
+          <input name="username" id="username" autocomplete="username" required value="danielyldrm" />
+          <label for="username">Kullanıcı Adı</label>
+        </div>
+        <div class="field">
+          <input name="password" id="password" type="password" autocomplete="current-password" required value="dani1" />
+          <label for="password">Şifre</label>
+        </div>
+        <button class="btn primary filled wide" type="submit">Giriş</button>
+        <div class="muted tiny top-gap">
+          Kullanıcılar: <code>danielyldrm / dani1</code> &nbsp; | &nbsp; <code>mustafa / mustafa1</code>
+        </div>
+        <div id="loginMsg" class="form-msg"></div>
+      </form>
+    </section>
+  </main>
+  <script src="app.js"></script>
+  <script src="api.js"></script>
+  <script>
+    setupThemeToggle();
+    if (localStorage.getItem('token')) location.href='dashboard.html';
+
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = Object.fromEntries(fd.entries());
+      const msg = document.getElementById('loginMsg');
+      msg.textContent = 'Giriş yapılıyor...';
+      msg.className='form-msg';
+      try {
+        const r = await apiLogin(data.username.trim(), data.password);
+        localStorage.setItem('token', r.token);
+        localStorage.setItem('username', r.username);
+        msg.textContent = 'Başarılı! Yönlendiriliyor...';
+        msg.classList.add('ok');
+        setTimeout(()=> location.href='dashboard.html', 400);
+      } catch (err) {
+        msg.textContent = err.message || 'Hata';
+        msg.classList.add('err');
+      }
+    });
+  </script>
+</body>
+</html>

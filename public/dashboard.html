@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel | Spor Takip</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body class="app-shell">
+  <div class="bg-decor app">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid-overlay subtle"></div>
+  </div>
+  <aside class="sidebar glass" id="sidebar">
+    <div class="side-top">
+      <div class="brand small">
+        <span class="logo-icon">🏋️‍♂️</span><span class="brand-name">SporTakip</span>
+      </div>
+      <button id="themeToggle" class="ghost-btn" aria-label="Tema Değiştir">🌓</button>
+    </div>
+    <nav class="days-nav" id="daysNav"></nav>
+    <div class="side-footer">
+      <div class="user-box">
+        <span id="welcomeUser" class="user-name"></span>
+      </div>
+      <button id="logoutBtn" class="btn danger outline small wide">Çıkış</button>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="main-header">
+      <h1 id="dayTitle" class="page-title">Gün</h1>
+      <div class="header-actions">
+        <button id="saveDayBtn" class="btn primary filled small">Kaydet</button>
+        <button id="clearDayBtn" class="btn outline small">Temizle</button>
+      </div>
+    </header>
+    <section class="panel glass" id="editorPanel">
+      <h2 class="panel-title">Egzersizler</h2>
+      <div id="exerciseList" class="exercise-list modern"></div>
+      <form id="addExerciseForm" class="form row-gap add-form">
+        <div class="field small">
+          <input name="name" id="exName" required maxlength="60" />
+          <label for="exName">Hareket</label>
+        </div>
+        <div class="field xsmall">
+          <input name="sets" id="exSets" type="number" min="1" max="30" required />
+          <label for="exSets">Set</label>
+        </div>
+        <div class="field xsmall">
+          <input name="reps" id="exReps" type="number" min="1" max="200" required />
+          <label for="exReps">Tekrar</label>
+        </div>
+        <div class="field medium">
+          <input name="notes" id="exNotes" maxlength="120" />
+          <label for="exNotes">Not (ops.)</label>
+        </div>
+        <div class="form-actions-inline">
+          <button class="btn primary filled small" style="width:100%">Ekle</button>
+        </div>
+      </form>
+      <div id="editorMsg" class="form-msg top-gap"></div>
+    </section>
+  </main>
+
+  <div class="mobile-days-scroll" id="mobileDays"></div>
+
+  <script src="app.js"></script>
+  <script src="api.js"></script>
+  <script>
+    setupThemeToggle();
+    const token = localStorage.getItem('token');
+    if (!token) location.href='login.html';
+
+    const dayNames = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+    let currentDayIndex = 0;
+    let weekData = [];
+
+    const daysNav = document.getElementById('daysNav');
+    const mobileDays = document.getElementById('mobileDays');
+    const dayTitle = document.getElementById('dayTitle');
+    const exerciseListEl = document.getElementById('exerciseList');
+    const editorMsg = document.getElementById('editorMsg');
+    const welcomeUser = document.getElementById('welcomeUser');
+
+    welcomeUser.textContent = localStorage.getItem('username') || '';
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      location.href='index.html';
+    });
+
+    function calcSummary(day) {
+      const total = day.exercises.length;
+      let vol = 0;
+      day.exercises.forEach(e => {
+        if (!isNaN(e.sets) && !isNaN(e.reps)) vol += e.sets * e.reps;
+      });
+      return { total, volume: vol };
+    }
+
+    function renderDays() {
+      daysNav.innerHTML = '';
+      mobileDays.innerHTML = '';
+      weekData.forEach(d => {
+        const { total } = calcSummary(d);
+        const btn = document.createElement('button');
+        btn.className = 'day-btn' + (d.dayIndex === currentDayIndex ? ' active':'');
+        btn.innerHTML = `<span class="dn">${dayNames[d.dayIndex].slice(0,3)}</span><small>${total}</small>`;
+        btn.addEventListener('click', ()=> {
+          currentDayIndex = d.dayIndex;
+          renderDays(); renderEditor();
+        });
+        daysNav.appendChild(btn);
+
+        const mb = btn.cloneNode(true);
+        mb.addEventListener('click', ()=> {
+          currentDayIndex = d.dayIndex;
+          renderDays(); renderEditor();
+          mb.scrollIntoView({behavior:'smooth', inline:'center'});
+        });
+        mobileDays.appendChild(mb);
+      });
+    }
+
+    function moveExercise(day, from, to) {
+      if (to < 0 || to >= day.exercises.length) return;
+      const arr = day.exercises;
+      const [item] = arr.splice(from,1);
+      arr.splice(to,0,item);
+    }
+
+    function renderEditor() {
+      const day = weekData.find(d => d.dayIndex === currentDayIndex);
+      dayTitle.textContent = dayNames[currentDayIndex];
+      exerciseListEl.innerHTML = '';
+      if (!day.exercises.length) {
+        exerciseListEl.innerHTML = '<div class="empty muted">Henüz egzersiz yok. Aşağıdan ekle.</div>';
+      } else {
+        day.exercises.forEach((ex, idx) => {
+          const row = document.createElement('div');
+          row.className = 'ex-row';
+          row.innerHTML = `
+            <div class="ex-main">
+              <div class="ex-title">${ex.name}</div>
+              <div class="ex-meta">${ex.sets} x ${ex.reps}${ex.notes ? ' · '+ex.notes:''}</div>
+            </div>
+            <div class="ex-tools">
+              <button class="icon-btn" data-up="${idx}" title="Yukarı">⬆</button>
+              <button class="icon-btn" data-down="${idx}" title="Aşağı">⬇</button>
+              <button class="icon-btn danger" data-del="${idx}" title="Sil">✕</button>
+            </div>
+          `;
+          exerciseListEl.appendChild(row);
+        });
+      }
+
+      exerciseListEl.onclick = (e) => {
+        const up = e.target.closest('[data-up]');
+        const down = e.target.closest('[data-down]');
+        const del = e.target.closest('[data-del]');
+        if (up) {
+          const i = +up.dataset.up;
+            moveExercise(day, i, i-1);
+            renderEditor(); renderDays();
+        } else if (down) {
+          const i = +down.dataset.down;
+            moveExercise(day, i, i+1);
+            renderEditor(); renderDays();
+        } else if (del) {
+          const i = +del.dataset.del;
+          day.exercises.splice(i,1);
+          renderEditor(); renderDays();
+        }
+      };
+    }
+
+    document.getElementById('addExerciseForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const ex = Object.fromEntries(fd.entries());
+      ex.name = ex.name.trim();
+      ex.sets = parseInt(ex.sets,10);
+      ex.reps = parseInt(ex.reps,10);
+      if (!ex.name) return;
+      const day = weekData.find(d => d.dayIndex === currentDayIndex);
+      day.exercises.push(ex);
+      e.target.reset();
+      renderEditor(); renderDays();
+      editorMsg.textContent='Eklendi';
+      editorMsg.className='form-msg ok';
+      setTimeout(()=> { if(editorMsg.textContent==='Eklendi') editorMsg.textContent=''; }, 1200);
+    });
+
+    document.getElementById('saveDayBtn').addEventListener('click', async () => {
+      const day = weekData.find(d => d.dayIndex === currentDayIndex);
+      editorMsg.textContent='Kaydediliyor...';
+      editorMsg.className='form-msg';
+      try {
+        await apiSaveDay(currentDayIndex, day.exercises);
+        editorMsg.textContent='Kaydedildi ✔';
+        editorMsg.classList.add('ok');
+        setTimeout(()=> editorMsg.textContent='', 1500);
+      } catch (err) {
+        editorMsg.textContent=err.message;
+        editorMsg.classList.add('err');
+      }
+    });
+
+    document.getElementById('clearDayBtn').addEventListener('click', () => {
+      if (!confirm('Bu günün tüm egzersizlerini sil?')) return;
+      const day = weekData.find(d => d.dayIndex === currentDayIndex);
+      day.exercises = [];
+      renderEditor(); renderDays();
+    });
+
+    async function init() {
+      try {
+        const res = await apiGetWeek();
+        weekData = res.week;
+        renderDays();
+        renderEditor();
+      } catch (err) {
+        alert('Veri alınamadı: ' + err.message);
+        if (String(err.message).includes('Yetkisiz')) location.href='login.html';
+      }
+    }
+    init();
+  </script>
+</body>
+</html>
